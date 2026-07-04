@@ -1,0 +1,21 @@
+{
+  "name": "ytube-mp3-kotlin-client",
+  "version": "0.0.0-unspecified",
+  "main": "ytube-mp3-kotlin-client.mjs",
+  "types": "ytube-mp3-kotlin-client.d.ts",
+  "devDependencies": {
+    "webpack": "5.94.0",
+    "webpack-cli": "5.1.4",
+    "kotlin-web-helpers": "2.0.0",
+    "source-map-loader": "5.0.0",
+    "webpack-dev-server": "4.15.2"
+  },
+  "dependencies": {
+    "@js-joda/core": "3.2.0",
+    "format-util": "^1.0.5",
+    "ws": "8.18.0"
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {},
+  "bundledDependencies": []
+}

@@ -1,0 +1,12 @@
+abi_version=2.2.0
+builtins_platform=WASM
+compiler_version=2.2.0
+depends=io.ktor\:ktor-client-content-negotiation io.ktor\:ktor-client-core io.ktor\:ktor-serialization-kotlinx-json org.jetbrains.kotlinx\:kotlinx-serialization-json-io org.jetbrains.kotlinx\:kotlinx-serialization-json org.jetbrains.compose.material3\:material3 org.jetbrains.compose.material\:material-ripple org.jetbrains.compose.foundation\:foundation org.jetbrains.compose.animation\:animation org.jetbrains.compose.foundation\:foundation-layout org.jetbrains.compose.ui\:ui org.jetbrains.compose.runtime\:runtime-saveable org.jetbrains.compose.runtime\:runtime org.jetbrains.androidx.lifecycle\:lifecycle-common io.ktor\:ktor-http-cio io.ktor\:ktor-websocket-serialization io.ktor\:ktor-serialization-kotlinx io.ktor\:ktor-serialization io.ktor\:ktor-websockets io.ktor\:ktor-http io.ktor\:ktor-events io.ktor\:ktor-sse org.jetbrains.compose.animation\:animation-core io.ktor\:ktor-utils io.ktor\:ktor-io org.jetbrains.kotlinx\:kotlinx-coroutines-core org.jetbrains.kotlinx\:kotlinx-browser org.jetbrains.kotlinx\:kotlinx-serialization-core org.jetbrains.compose.annotation-internal\:annotation org.jetbrains.kotlinx\:kotlinx-io-core org.jetbrains.kotlinx\:kotlinx-io-bytestring kotlin org.jetbrains.compose.ui\:ui-text org.jetbrains.compose.ui\:ui-graphics org.jetbrains.compose.ui\:ui-unit org.jetbrains.kotlinx\:atomicfu org.jetbrains.skiko\:skiko org.jetbrains.compose.ui\:ui-geometry org.jetbrains.compose.ui\:ui-util
+ir_signature_versions=1,2
+jsOutputName=ytube-mp3-kotlin-client
+language_features=+JsAllowImplementingFunctionInterface +JsAllowValueClassesInExternals +MultiPlatformProjects
+metadata_version=1.4.1
+serializedIrFileFingerprints=ce9dng056kym.eta7w54i76ad 16s44w50z830y.3vz2deltvkial 199yqg6dvt8vf.2aaj85odsgpsb 2i45l6yueoa1a.1yae7skth2zwx 2i89tfu1xcn70.4xbfgmmz4ah 1fpe5o5u14fqb.gwpoaehx5x5j 3fzbsmkr4x6lu.2ujtpu97ovqdc shtpds863qk8.27jqyobjwf080 17py3xlkg8c4s.nnixmij0sd3w 3pzy5a1nz1lwp.37gz504fo8u0z 2pneshtcfczlc.13x2kknsldrnj 1vmk9oi0djfnr.37stqfqrku8tw 3v1qlsdyxd5xa.76jpuiyj30iw
+serializedKlibFingerprint=35k7apigbi8q1.2zttd1w8mmpz7
+unique_name=ytube-mp3-kotlin\:client
+wasm_targets=wasm-js

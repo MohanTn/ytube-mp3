@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Gradle wrapper script for Unix/Linux/macOS
+#
+
+set -e
+
+APP_HOME="$(cd "$(dirname "$0")" && pwd)"
+CLASSPATH="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+
+# Download wrapper jar if missing
+if [ ! -f "$CLASSPATH" ]; then
+    echo "Downloading Gradle wrapper jar..."
+    mkdir -p "$APP_HOME/gradle/wrapper"
+    if command -v curl > /dev/null 2>&1; then
+        curl -fsSL -o "$CLASSPATH" \
+            "https://github.com/gradle/gradle/raw/v8.11.1/gradle/wrapper/gradle-wrapper.jar"
+    elif command -v wget > /dev/null 2>&1; then
+        wget -q -O "$CLASSPATH" \
+            "https://github.com/gradle/gradle/raw/v8.11.1/gradle/wrapper/gradle-wrapper.jar"
+    else
+        echo "ERROR: curl or wget is required to bootstrap the Gradle wrapper." >&2
+        exit 1
+    fi
+fi
+
+JAVACMD="${JAVA_HOME:+$JAVA_HOME/bin/}java"
+exec "$JAVACMD" -jar "$CLASSPATH" "$@"

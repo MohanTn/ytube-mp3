@@ -1,0 +1,19 @@
+{
+  "name": "ytube-mp3-kotlin",
+  "version": "unspecified",
+  "private": true,
+  "workspaces": [
+    "packages/ytube-mp3-kotlin-client",
+    "packages/ytube-mp3-kotlin-client-test",
+    "packages_imported/skiko-wasm-js/0.9.4-2",
+    "packages_imported/skiko-js-wasm-runtime/0.9.4-2",
+    "packages_imported/Kotlin-DateTime-library-kotlinx-datetime-wasm-js/0.6.0",
+    "packages_imported/ktor-ktor-client-core-wasm-js/3.2.0"
+  ],
+  "devDependencies": {},
+  "dependencies": {},
+  "peerDependencies": {},
+  "optionalDependencies": {},
+  "bundledDependencies": [],
+  "resolutions": {}
+}
