@@ -44,7 +44,6 @@ export default function SettingsForm() {
     setFieldErrors({});
     try {
       await updateSettings({
-        outputDir: form.outputDir,
         audioBitrateKbps: Number(form.audioBitrateKbps),
         filenameTemplate: form.filenameTemplate,
         maxQueueSize: Number(form.maxQueueSize),
@@ -70,17 +69,6 @@ export default function SettingsForm() {
 
   return (
     <form className="settings-form" onSubmit={handleSubmit}>
-      <div className="field">
-        <label htmlFor="outputDir">Output directory</label>
-        <input
-          id="outputDir"
-          type="text"
-          value={form.outputDir}
-          onChange={(e) => setField('outputDir', e.target.value)}
-        />
-        {fieldErrors.outputDir && <p className="field__error">{fieldErrors.outputDir}</p>}
-      </div>
-
       <div className="field">
         <label htmlFor="audioBitrateKbps">Audio quality (bitrate)</label>
         <select

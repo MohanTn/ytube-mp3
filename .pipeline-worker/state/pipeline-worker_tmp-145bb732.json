@@ -1,0 +1,44 @@
+{
+  "branch": "pipeline-worker/tmp-145bb732",
+  "targetBranch": "main",
+  "worktreePath": "/tmp/pipeline-worker-VVo8bz/worktree",
+  "ciFixAttempt": 0,
+  "conflictAttempt": 0,
+  "phase": "diff",
+  "changedFiles": [
+    ".env.example",
+    ".gitignore",
+    "README.md",
+    "client/src/components/QueueItem.jsx",
+    "client/src/components/SettingsForm.jsx",
+    "client/src/components/StatusBanner.jsx",
+    "client/src/styles/index.css",
+    "package.json",
+    "server/config.js",
+    "server/index.js",
+    "server/routes/queue.js",
+    "server/services/downloader.js",
+    "server/services/queueManager.js",
+    "server/services/settingsService.js",
+    "server/services/startupChecks.js",
+    "server/services/stateStore.js"
+  ],
+  "untrackedFiles": [
+    ".dockerignore",
+    ".pipeline-worker/",
+    "Dockerfile",
+    "docker-compose.yml",
+    "server/services/fileStore.js",
+    "test/"
+  ],
+  "startedAt": "2026-08-25T13:52:49.166Z",
+  "updatedAt": "2026-08-25T13:52:49.166Z",
+  "history": [
+    {
+      "at": "2026-08-25T13:52:49.166Z",
+      "phase": "diff",
+      "level": "info",
+      "message": "Created worktree at /tmp/pipeline-worker-VVo8bz/worktree (temp branch pipeline-worker/tmp-145bb732)"
+    }
+  ]
+}

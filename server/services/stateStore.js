@@ -4,6 +4,20 @@ const { DATA_DIR, STATE_FILE, DEFAULT_SETTINGS } = require('../config');
 
 const STATE_VERSION = 1;
 
+/**
+ * Keeps only known settings keys, so fields dropped in a newer version
+ * (e.g. the old `outputDir`) don't linger in state.json.
+ */
+function mergeSettings(persisted) {
+  const merged = { ...DEFAULT_SETTINGS };
+  for (const key of Object.keys(DEFAULT_SETTINGS)) {
+    if (persisted && persisted[key] !== undefined) {
+      merged[key] = persisted[key];
+    }
+  }
+  return merged;
+}
+
 function defaultState() {
   return {
     version: STATE_VERSION,
@@ -37,7 +51,7 @@ class StateStore {
       const parsed = JSON.parse(raw);
       this.state = {
         version: STATE_VERSION,
-        settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
+        settings: mergeSettings(parsed.settings),
         queue: Array.isArray(parsed.queue) ? parsed.queue : []
       };
     } catch (err) {

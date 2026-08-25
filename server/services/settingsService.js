@@ -2,8 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const stateStore = require('./stateStore');
 const eventBus = require('./eventBus');
-const { refreshOutputDirStatus, getSystemStatus } = require('./startupChecks');
-const { ALLOWED_BITRATES, ALLOWED_TEMPLATE_PLACEHOLDERS } = require('../config');
+const { ALLOWED_BITRATES, ALLOWED_TEMPLATE_PLACEHOLDERS, DEFAULT_SETTINGS } = require('../config');
 const { ValidationError } = require('../errors');
 
 const TEMPLATE_PLACEHOLDER_PATTERN = /%\([a-zA-Z_]+\)s/g;
@@ -13,8 +12,8 @@ function getSettings() {
 }
 
 /**
- * Validates the filename template: only allow-listed placeholders, and
- * no path separators or '..' (defense against writing outside outputDir).
+ * Validates the filename template: only allow-listed placeholders, and no
+ * path separators or '..' (defense against writing outside the staging dir).
  */
 function validateFilenameTemplate(template) {
   if (typeof template !== 'string' || !template.trim()) {
@@ -41,19 +40,6 @@ function validateFilenameTemplate(template) {
  */
 function validateSettingsUpdate(partial) {
   const errors = [];
-
-  if (partial.outputDir !== undefined) {
-    if (typeof partial.outputDir !== 'string' || !path.isAbsolute(partial.outputDir)) {
-      errors.push({ field: 'outputDir', message: 'Output directory must be an absolute path' });
-    } else {
-      try {
-        fs.mkdirSync(partial.outputDir, { recursive: true });
-        fs.accessSync(partial.outputDir, fs.constants.W_OK);
-      } catch (err) {
-        errors.push({ field: 'outputDir', message: `Directory is not writable: ${err.message}` });
-      }
-    }
-  }
 
   if (partial.audioBitrateKbps !== undefined) {
     if (!ALLOWED_BITRATES.includes(partial.audioBitrateKbps)) {
@@ -107,14 +93,15 @@ async function updateSettings(partial) {
   }
 
   const current = stateStore.getSettings();
-  const updated = { ...current, ...partial };
+  const updated = { ...current };
+  for (const key of Object.keys(DEFAULT_SETTINGS)) {
+    if (partial[key] !== undefined) {
+      updated[key] = partial[key];
+    }
+  }
+
   await stateStore.setSettings(updated);
   eventBus.broadcast('settings:update', updated);
-
-  if (partial.outputDir !== undefined) {
-    refreshOutputDirStatus(updated.outputDir);
-    eventBus.broadcast('system:status', getSystemStatus());
-  }
 
   return updated;
 }

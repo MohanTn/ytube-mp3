@@ -1,6 +1,9 @@
+const fs = require('fs');
+const path = require('path');
 const stateStore = require('./stateStore');
 const eventBus = require('./eventBus');
 const downloader = require('./downloader');
+const fileStore = require('./fileStore');
 const { generateQueueItemId } = require('../utils/idGenerator');
 const { validateYoutubeUrl } = require('../utils/validateUrl');
 const { getSystemStatus } = require('./startupChecks');
@@ -59,7 +62,9 @@ class QueueManager {
         progress: 0,
         speed: null,
         eta: null,
-        outputPath: null,
+        filename: null,
+        fileAvailable: false,
+        downloadedAt: null,
         error: null,
         addedAt: new Date().toISOString(),
         startedAt: null,
@@ -100,7 +105,64 @@ class QueueManager {
       cancel();
     }
 
+    fileStore.removeItemDir(id);
+
     return item;
+  }
+
+  /**
+   * Absolute path of an item's staged MP3, or null if nothing is staged.
+   */
+  getStagedFile(id) {
+    const item = this.getQueue().find((q) => q.id === id);
+    if (!item) {
+      throw new NotFoundError(`Queue item ${id} not found`);
+    }
+    if (!item.fileAvailable || !item.filename) {
+      return { item, filePath: null };
+    }
+    return { item, filePath: path.join(fileStore.itemDir(id), item.filename) };
+  }
+
+  /**
+   * Called once the browser has the file: the staged copy is deleted so
+   * nothing accumulates on the host.
+   */
+  async markDownloaded(id) {
+    const item = this.getQueue().find((q) => q.id === id);
+    await fileStore.removeItemDir(id);
+    if (!item) return;
+
+    item.fileAvailable = false;
+    item.downloadedAt = new Date().toISOString();
+    this._persistAndBroadcast();
+  }
+
+  /**
+   * Deletes staged files past their retention window (and any orphans),
+   * then flags the affected items as no longer downloadable.
+   */
+  async sweepStagedFiles() {
+    const queue = this.getQueue();
+    const liveIds = queue
+      .filter((item) => item.fileAvailable || item.status === 'downloading' || item.status === 'converting')
+      .map((item) => item.id);
+
+    const removed = await fileStore.sweep(liveIds);
+    if (removed.length === 0) return removed;
+
+    let changed = false;
+    for (const item of queue) {
+      if (item.fileAvailable && removed.includes(item.id)) {
+        item.fileAvailable = false;
+        changed = true;
+      }
+    }
+    if (changed) {
+      this._persistAndBroadcast();
+    }
+
+    return removed;
   }
 
   /**
@@ -123,9 +185,13 @@ class QueueManager {
     item.speed = null;
     item.eta = null;
     item.error = null;
+    item.filename = null;
+    item.fileAvailable = false;
+    item.downloadedAt = null;
     item.startedAt = null;
     item.finishedAt = null;
 
+    fileStore.removeItemDir(id);
     this._persistAndBroadcast();
     this.processNext();
     return item;
@@ -135,7 +201,7 @@ class QueueManager {
    * Called once at startup. Any item left in 'downloading'/'converting'
    * from a previous run (e.g. the process crashed) is reset to 'queued'
    * and moved to the front of the queue, in original relative order.
-   * Leftover partial files in the output directory are best-effort removed.
+   * Staged files that no longer exist on disk are marked unavailable.
    */
   async recoverInterruptedItems() {
     const queue = this.getQueue();
@@ -150,31 +216,33 @@ class QueueManager {
         item.eta = null;
         item.startedAt = null;
         interrupted.push(item);
+        await fileStore.removeItemDir(item.id);
       } else {
+        if (item.fileAvailable && !fs.existsSync(path.join(fileStore.itemDir(item.id), item.filename || ''))) {
+          item.fileAvailable = false;
+        }
         rest.push(item);
       }
     }
 
     if (interrupted.length === 0) {
+      stateStore.save();
       return;
     }
 
     stateStore.setQueue([...interrupted, ...rest]);
-
-    const settings = stateStore.getSettings();
-    await downloader.cleanupPartialFiles(settings.outputDir);
   }
 
   /**
    * Starts processing the next queued item, if any, unless something is
    * already processing or the system isn't ready (missing binaries / bad
-   * output dir).
+   * staging dir).
    */
   processNext() {
     if (this.processing) return;
 
     const systemStatus = getSystemStatus();
-    if (!systemStatus.ytDlpAvailable || !systemStatus.ffmpegAvailable || !systemStatus.outputDirWritable) {
+    if (!systemStatus.ytDlpAvailable || !systemStatus.ffmpegAvailable || !systemStatus.stagingDirWritable) {
       return;
     }
 
@@ -216,11 +284,15 @@ class QueueManager {
         item.progress = 100;
         item.speed = null;
         item.eta = null;
-        item.outputPath = outputPath;
+        item.filename = outputPath ? path.basename(outputPath) : null;
+        item.fileAvailable = Boolean(item.filename);
         item.finishedAt = new Date().toISOString();
         this._persistAndBroadcast();
+      } else {
+        await fileStore.removeItemDir(item.id);
       }
     } catch (err) {
+      await fileStore.removeItemDir(item.id);
       if (!err.canceled && this.getQueue().includes(item)) {
         item.status = 'error';
         item.error = err.message;

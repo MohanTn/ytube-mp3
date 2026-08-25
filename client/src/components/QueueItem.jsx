@@ -42,13 +42,24 @@ export default function QueueItem({ item }) {
         <div className="queue-item__error">{item.error}</div>
       )}
 
-      {item.status === 'done' && item.outputPath && (
-        <div className="queue-item__output" title={item.outputPath}>
-          Saved to {item.outputPath}
+      {item.status === 'done' && !item.fileAvailable && (
+        <div className="queue-item__output">
+          {item.downloadedAt
+            ? `Downloaded${item.filename ? ` as ${item.filename}` : ''}`
+            : 'File is no longer on the server — add the URL again to re-download'}
         </div>
       )}
 
       <div className="queue-item__actions">
+        {item.status === 'done' && item.fileAvailable && (
+          <a
+            className="button button--small button--primary"
+            href={`/api/queue/${item.id}/file`}
+            download={item.filename || ''}
+          >
+            Download
+          </a>
+        )}
         {item.status === 'error' && (
           <button className="button button--small" onClick={handleRetry}>
             Retry

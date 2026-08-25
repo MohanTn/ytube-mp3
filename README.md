@@ -2,7 +2,9 @@
 
 A local web app for downloading YouTube videos as MP3 files. Paste one or more
 YouTube URLs into a queue; they're downloaded and converted to MP3
-**sequentially**, one at a time, and saved to a configurable directory on disk.
+**sequentially**, one at a time, then delivered to your browser via a
+**Download** button. The server keeps no copy: the staged file is deleted the
+moment the transfer completes.
 
 - **Frontend**: React + Vite SPA, with live progress via Server-Sent Events (SSE)
 - **Backend**: Express + [yt-dlp](https://github.com/yt-dlp/yt-dlp) + ffmpeg
@@ -85,9 +87,8 @@ All settings are editable from the Settings tab in the UI (`GET`/`PUT
 
 | Setting | Description | Default |
 |---|---|---|
-| Output directory | Absolute path where MP3s are saved | `<repo>/downloads` |
 | Audio quality | Bitrate: 128 / 192 / 256 / 320 kbps | 192 |
-| Filename template | yt-dlp output template (allowed placeholders: `%(title)s`, `%(id)s`, `%(uploader)s`, `%(upload_date)s`, `%(ext)s`) | `%(title)s.%(ext)s` |
+| Filename template | Name of the file the browser saves (allowed placeholders: `%(title)s`, `%(id)s`, `%(uploader)s`, `%(upload_date)s`, `%(ext)s`) | `%(title)s.%(ext)s` |
 | Max queue size | Reject additions beyond this | 100 |
 | Cookies file | Optional path to a cookies.txt for age-restricted videos | (none) |
 | Embed thumbnail | Embed video thumbnail as cover art | off |
@@ -99,11 +100,34 @@ Environment variables (`.env`, see `.env.example`):
 |---|---|---|
 | `PORT` | Express server port | 3010 |
 | `DATA_DIR` | Where `state.json` is stored | `./data` |
+| `STAGING_DIR` | Where finished MP3s wait to be downloaded | `$DATA_DIR/staging` |
+| `FILE_RETENTION_MINUTES` | How long an undownloaded file is kept | 360 |
 | `YTDLP_PATH` | Path or command name for yt-dlp | `yt-dlp` |
 | `FFMPEG_PATH` | Path or command name for ffmpeg | `ffmpeg` |
 
+## Docker (home server)
+
+```bash
+docker compose up -d --build
+```
+
+Then open **http://\<server-ip\>:3010**. `yt-dlp` and `ffmpeg` are baked into
+the image, so nothing needs installing on the host.
+
+- `HOST_PORT` overrides the published port (`HOST_PORT=8080 docker compose up -d`).
+- State and staged files live in the `ytube-mp3-data` volume; nothing is
+  written to the host filesystem.
+- For age-restricted videos, uncomment the `./cookies:/cookies:ro` mount and
+  set the cookies file to `/cookies/cookies.txt` in Settings.
+- Pin a different yt-dlp release with
+  `docker compose build --build-arg YTDLP_VERSION=2025.06.09`.
+
 ## Notes
 
+- Files are never kept on the server: the MP3 is staged, streamed to your
+  browser when you click **Download**, and deleted as soon as the transfer
+  completes. A sweeper removes anything unclaimed after
+  `FILE_RETENTION_MINUTES`.
 - Pasted URLs are treated as single videos (`--no-playlist`), even if they
   contain playlist parameters.
 - If the server is restarted mid-download, that item is automatically

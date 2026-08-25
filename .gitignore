@@ -6,3 +6,5 @@ downloads/
 .env
 *.log
 .bin/
+
+.claude/repo-map.md

@@ -11,7 +11,8 @@
     "dev:server": "nodemon server/index.js",
     "dev:client": "npm run dev --workspace client",
     "build": "npm run build --workspace client",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "test": "node --test \"test/**/*.test.js\""
   },
   "dependencies": {
     "cors": "^2.8.5",

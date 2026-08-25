@@ -1,0 +1,14 @@
+node_modules
+client/node_modules
+client/dist
+kotlin
+data
+downloads
+.bin
+.git
+.github
+.claude
+.env
+*.log
+Dockerfile
+docker-compose.yml
