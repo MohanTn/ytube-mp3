@@ -13,8 +13,8 @@ export default function StatusBanner() {
   if (!systemStatus.ffmpegAvailable) {
     problems.push('ffmpeg binary not found — install it and restart the server.');
   }
-  if (!systemStatus.outputDirWritable) {
-    problems.push(`Output directory "${systemStatus.outputDir}" is not writable.`);
+  if (!systemStatus.stagingDirWritable) {
+    problems.push(`Staging directory "${systemStatus.stagingDir}" is not writable.`);
   }
 
   if (problems.length === 0) return null;

@@ -1,0 +1,30 @@
+services:
+  ytube-mp3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ytube-mp3:latest
+    container_name: ytube-mp3
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-3010}:3010"
+    environment:
+      # Queue/settings state, plus the staging area for not-yet-downloaded MP3s.
+      DATA_DIR: /data
+      STAGING_DIR: /data/staging
+      # Files nobody downloaded are deleted after this many minutes.
+      FILE_RETENTION_MINUTES: "${FILE_RETENTION_MINUTES:-360}"
+    volumes:
+      - ytube-mp3-data:/data
+      # Optional: cookies.txt for age-restricted videos, then point Settings at
+      # /cookies/cookies.txt.
+      # - ./cookies:/cookies:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3010/api/system/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  ytube-mp3-data:

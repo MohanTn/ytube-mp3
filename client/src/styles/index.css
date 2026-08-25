@@ -104,6 +104,13 @@ body {
   align-self: flex-start;
 }
 
+/* The download action is an <a download>, so it needs button-ish layout. */
+a.button {
+  display: inline-block;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
 .button:disabled {
   opacity: 0.5;
   cursor: default;

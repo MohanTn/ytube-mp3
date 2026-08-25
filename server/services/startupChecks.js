@@ -1,7 +1,6 @@
-const fs = require('fs');
 const { execFile } = require('child_process');
-const { YTDLP_PATH, FFMPEG_PATH } = require('../config');
-const stateStore = require('./stateStore');
+const { YTDLP_PATH, FFMPEG_PATH, STAGING_DIR } = require('../config');
+const fileStore = require('./fileStore');
 const eventBus = require('./eventBus');
 
 /**
@@ -12,8 +11,8 @@ const systemStatus = {
   ytDlpAvailable: false,
   ytDlpVersion: null,
   ffmpegAvailable: false,
-  outputDirWritable: false,
-  outputDir: null
+  stagingDirWritable: false,
+  stagingDir: STAGING_DIR
 };
 
 function execVersionCheck(binPath, args) {
@@ -28,24 +27,12 @@ function execVersionCheck(binPath, args) {
   });
 }
 
-function checkOutputDirWritable(outputDir) {
-  try {
-    fs.mkdirSync(outputDir, { recursive: true });
-    fs.accessSync(outputDir, fs.constants.W_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /**
- * Runs startup checks for yt-dlp, ffmpeg and the configured output
- * directory. Updates the shared systemStatus object and emits
- * 'system:error' over the event bus if anything is missing/broken.
+ * Runs startup checks for yt-dlp, ffmpeg and the staging directory files
+ * are held in until the browser downloads them. Updates the shared
+ * systemStatus object and emits 'system:error' if anything is broken.
  */
 async function runStartupChecks() {
-  const settings = stateStore.getSettings();
-
   const [ytDlp, ffmpeg] = await Promise.all([
     execVersionCheck(YTDLP_PATH, ['--version']),
     execVersionCheck(FFMPEG_PATH, ['-version'])
@@ -54,8 +41,7 @@ async function runStartupChecks() {
   systemStatus.ytDlpAvailable = ytDlp.available;
   systemStatus.ytDlpVersion = ytDlp.version;
   systemStatus.ffmpegAvailable = ffmpeg.available;
-  systemStatus.outputDir = settings.outputDir;
-  systemStatus.outputDirWritable = checkOutputDirWritable(settings.outputDir);
+  systemStatus.stagingDirWritable = fileStore.isWritable();
 
   if (!systemStatus.ytDlpAvailable) {
     console.error(
@@ -80,24 +66,14 @@ async function runStartupChecks() {
     });
   }
 
-  if (!systemStatus.outputDirWritable) {
-    console.error(`[startupChecks] Output directory "${settings.outputDir}" is not writable.`);
+  if (!systemStatus.stagingDirWritable) {
+    console.error(`[startupChecks] Staging directory "${STAGING_DIR}" is not writable.`);
     eventBus.broadcast('system:error', {
-      code: 'OUTPUT_DIR_NOT_WRITABLE',
-      message: `Output directory "${settings.outputDir}" is not writable.`
+      code: 'STAGING_DIR_NOT_WRITABLE',
+      message: `Staging directory "${STAGING_DIR}" is not writable.`
     });
   }
 
-  return systemStatus;
-}
-
-/**
- * Re-checks output dir writability (called after a settings update) and
- * broadcasts the refreshed status.
- */
-function refreshOutputDirStatus(outputDir) {
-  systemStatus.outputDir = outputDir;
-  systemStatus.outputDirWritable = checkOutputDirWritable(outputDir);
   return systemStatus;
 }
 
@@ -107,6 +83,5 @@ function getSystemStatus() {
 
 module.exports = {
   runStartupChecks,
-  refreshOutputDirStatus,
   getSystemStatus
 };

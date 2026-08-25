@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const youtubedl = require('yt-dlp-exec');
+const fileStore = require('./fileStore');
 const { YTDLP_PATH, FFMPEG_PATH } = require('../config');
 
 const ytdlp = youtubedl.create(YTDLP_PATH);
@@ -84,15 +85,17 @@ function buildFlags(settings, outputTemplate) {
 }
 
 /**
- * Starts a yt-dlp download+mp3-extraction job.
+ * Starts a yt-dlp download+mp3-extraction job. The MP3 is written into the
+ * item's staging directory, where it waits to be streamed to the browser.
  *
- * @param {object} item - queue item (must have `url`)
+ * @param {object} item - queue item (must have `id` and `url`)
  * @param {object} settings - current app settings
  * @param {function} onProgress - called with { status, progress, speed, eta }
  * @returns {{ promise: Promise<{outputPath: string|null}>, cancel: function }}
  */
 function download(item, settings, onProgress) {
-  const outputTemplate = path.join(settings.outputDir, settings.filenameTemplate);
+  const stagingDir = fileStore.createItemDir(item.id);
+  const outputTemplate = path.join(stagingDir, settings.filenameTemplate);
   const flags = buildFlags(settings, outputTemplate);
 
   const subprocess = ytdlp.exec(item.url, flags);
@@ -149,7 +152,7 @@ function download(item, settings, onProgress) {
   const cancel = async () => {
     canceled = true;
     subprocess.kill('SIGTERM');
-    await cleanupPartialFiles(settings.outputDir);
+    await cleanupPartialFiles(stagingDir);
   };
 
   return { promise, cancel };

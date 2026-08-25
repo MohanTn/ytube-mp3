@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express');
 const queueManager = require('../services/queueManager');
 const { getSystemStatus } = require('../services/startupChecks');
@@ -26,6 +27,36 @@ router.post('/', (req, res) => {
 
   const { added, rejected } = queueManager.addItems(urls);
   res.status(201).json({ added, rejected });
+});
+
+/**
+ * Streams a finished MP3 to the browser as an attachment, then deletes the
+ * staged copy so nothing is left on the host.
+ */
+router.get('/:id/file', (req, res, next) => {
+  let staged;
+  try {
+    staged = queueManager.getStagedFile(req.params.id);
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
+    return res.status(400).json({ error: 'Invalid queue item id' });
+  }
+
+  const { item, filePath } = staged;
+  if (!filePath || !fs.existsSync(filePath)) {
+    return res.status(410).json({ error: 'File is no longer available on the server' });
+  }
+
+  res.download(filePath, item.filename, (err) => {
+    if (err) {
+      // Client aborted or the socket died: keep the file so it can be retried.
+      if (!res.headersSent) next(err);
+      return;
+    }
+    queueManager.markDownloaded(item.id);
+  });
 });
 
 router.delete('/:id', (req, res, next) => {
